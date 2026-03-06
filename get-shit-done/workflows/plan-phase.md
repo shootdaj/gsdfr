@@ -434,7 +434,67 @@ Offer: 1) Force proceed, 2) Provide guidance and retry, 3) Abandon
 
 ## 13. Present Final Status
 
-Route to `<offer_next>` OR `auto_advance` depending on flags/config.
+Route to `<plan_review_gate>` first (if enabled), then `<offer_next>` OR `auto_advance` depending on flags/config.
+
+## 13.5. Plan Review Gate
+
+**Read review config:**
+```bash
+PLAN_REVIEW=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" config-get review.plan_review 2>/dev/null || echo "true")
+```
+
+**If `PLAN_REVIEW` is `"true"`:**
+
+Present plans to user for review before any execution begins.
+
+1. **List all plans with summaries:**
+
+   For each plan in the phase directory, read and extract the `<objective>` and task list:
+
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    GSD ► PLAN REVIEW — Phase {X}: {Name}
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Review the plans below before execution begins.
+   Full details: cat {phase_dir}/*-PLAN.md
+
+   ### Plan {plan_id}: {plan_name}
+   **Wave:** {wave} | **Tasks:** {task_count} | **Autonomous:** {yes/no}
+   **Objective:** {objective summary}
+   **Key files:** {files_modified list}
+
+   [Repeat for each plan]
+
+   ───────────────────────────────────────────────────────
+   ```
+
+2. **Ask for approval:**
+
+   Use AskUserQuestion:
+   - header: "Plan Review"
+   - question: "Review the plans above. Approve to proceed to execution, or request changes?"
+   - options:
+     - "Approve plans" — Proceed to execution
+     - "Review in detail" — Show full plan contents for closer inspection
+     - "Request changes" — Describe what you want adjusted before execution
+
+   **If "Approve plans":** Continue to step 14 (auto-advance check) or `<offer_next>`.
+
+   **If "Review in detail":**
+   - Read and display each PLAN.md file's full content
+   - After displaying, re-ask: "Approve plans?" / "Request changes?"
+
+   **If "Request changes":**
+   - Capture user's change request via AskUserQuestion (free text via "Other")
+   - Display: `Sending back to planner for revision with your feedback...`
+   - Spawn gsd-planner with revision prompt including user feedback
+   - After revision, re-run plan checker if enabled
+   - Return to this review gate (loop until approved)
+
+**If `PLAN_REVIEW` is `"false"`:**
+
+Skip directly to step 14.
 
 ## 14. Auto-Advance Check
 
@@ -564,6 +624,8 @@ Verification: {Passed | Passed with override | Skipped}
 - [ ] Plans created (PLANNING COMPLETE or CHECKPOINT handled)
 - [ ] gsd-plan-checker spawned with CONTEXT.md
 - [ ] Verification passed OR user override OR max iterations with user decision
+- [ ] Plan review gate presented (if review.plan_review enabled)
+- [ ] User approved plans OR requested changes and plans were revised
 - [ ] User sees status between agent spawns
 - [ ] User knows next steps
 </success_criteria>

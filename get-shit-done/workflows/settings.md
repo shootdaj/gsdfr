@@ -102,6 +102,24 @@ AskUserQuestion([
       { label: "Per Phase", description: "Create branch for each phase (gsd/phase-{N}-{name})" },
       { label: "Per Milestone", description: "Create branch for entire milestone (gsd/{version}-{name})" }
     ]
+  },
+  {
+    question: "Review plans before execution? (pause after planning for you to review PLAN.md files)",
+    header: "Plan Review",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Pause after planning so you can review and approve plans before any code is written" },
+      { label: "No", description: "Skip plan review, proceed directly to execution" }
+    ]
+  },
+  {
+    question: "Review after each execution wave? (pause between waves to review what was built)",
+    header: "Wave Review",
+    multiSelect: false,
+    options: [
+      { label: "Yes (Recommended)", description: "Pause after each wave so you can review diffs and approve before the next wave starts" },
+      { label: "No", description: "Execute all waves continuously without pausing" }
+    ]
   }
 ])
 ```
@@ -120,6 +138,10 @@ Merge new settings into existing config.json:
     "verifier": true/false,
     "auto_advance": true/false,
     "nyquist_validation": true/false
+  },
+  "review": {
+    "plan_review": true/false,
+    "wave_review": true/false
   },
   "git": {
     "branching_strategy": "none" | "phase" | "milestone"
@@ -168,6 +190,10 @@ Write `~/.gsd/defaults.json` with:
     "verifier": <current>,
     "auto_advance": <current>,
     "nyquist_validation": <current>
+  },
+  "review": {
+    "plan_review": <current>,
+    "wave_review": <current>
   }
 }
 ```
@@ -189,6 +215,8 @@ Display:
 | Execution Verifier   | {On/Off} |
 | Auto-Advance         | {On/Off} |
 | Nyquist Validation   | {On/Off} |
+| Plan Review          | {On/Off} |
+| Wave Review          | {On/Off} |
 | Git Branching        | {None/Per Phase/Per Milestone} |
 | Saved as Defaults    | {Yes/No} |
 
@@ -206,7 +234,7 @@ Quick commands:
 
 <success_criteria>
 - [ ] Current config read
-- [ ] User presented with 7 settings (profile + 5 workflow toggles + git branching)
+- [ ] User presented with 9 settings (profile + 5 workflow toggles + 2 review toggles + git branching)
 - [ ] Config updated with model_profile, workflow, and git sections
 - [ ] User offered to save as global defaults (~/.gsd/defaults.json)
 - [ ] Changes confirmed to user

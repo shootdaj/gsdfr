@@ -62,6 +62,21 @@ cat .planning/config.json 2>/dev/null
 
 <if mode="yolo">
 
+**Check review config before auto-approving:**
+```bash
+PLAN_REVIEW=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" config-get review.plan_review 2>/dev/null || echo "true")
+```
+
+**If `PLAN_REVIEW` is `"true"`:**
+
+Even in YOLO mode, pause for transition confirmation when plan review is enabled:
+
+Ask: "Phase [X] complete — all [Y] plans finished. Ready to mark done and move to Phase [X+1]?"
+
+Wait for confirmation before proceeding.
+
+**If `PLAN_REVIEW` is `"false"`:**
+
 ```
 ⚡ Auto-approved: Transition Phase [X] → Phase [X+1]
 Phase [X] complete — all [Y] plans finished.

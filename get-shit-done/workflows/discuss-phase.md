@@ -237,60 +237,67 @@ Gray areas:
 </step>
 
 <step name="present_gray_areas">
-Present the domain boundary and gray areas to user.
+Present the domain boundary and ALL gray areas to user for comprehensive discussion.
 
 **First, state the boundary:**
 ```
 Phase [X]: [Name]
 Domain: [What this phase delivers — from your analysis]
 
-We'll clarify HOW to implement this.
+We'll walk through ALL implementation areas to capture your preferences.
 (New capabilities belong in other phases.)
 ```
 
-**Then use AskUserQuestion (multiSelect: true):**
+**Then present ALL gray areas and let user deselect any they don't care about:**
+
+Use AskUserQuestion (multiSelect: true):
 - header: "Discuss"
-- question: "Which areas do you want to discuss for [phase name]?"
-- options: Generate 3-4 phase-specific gray areas, each with:
+- question: "We'll discuss all these areas for [phase name]. Deselect any you want to skip (Claude will use best judgment for skipped areas):"
+- options: Generate 4-6 phase-specific gray areas (more comprehensive than before), each with:
   - "[Specific area]" (label) — concrete, not generic
   - [1-2 questions this covers + code context annotation] (description)
   - **Highlight the recommended choice with brief explanation why**
 
+**The key difference:** Generate MORE areas (4-6 instead of 3-4) and frame the question as "deselect what you don't care about" rather than "select what you want to discuss." This encourages comprehensive coverage by default — the user opts OUT of areas rather than opting IN.
+
 **Code context annotations:** When the scout found relevant existing code, annotate the gray area description:
 ```
-☐ Layout style — Cards vs list vs timeline?
+☑ Layout style — Cards vs list vs timeline?
   (You already have a Card component with shadow/rounded variants. Reusing it keeps the app consistent.)
 ```
 
-**Do NOT include a "skip" or "you decide" option.** User ran this command to discuss — give them real choices.
+**Do NOT include a "skip all" or "you decide on everything" option.** User ran this command to discuss — give them real choices. The minimum discussion should cover at least 2 areas.
 
-**Examples by domain (with code context):**
+**Examples by domain (with code context — note: 5-6 areas now):**
 
 For "Post Feed" (visual feature):
 ```
-☐ Layout style — Cards vs list vs timeline? (Card component exists with variants)
-☐ Loading behavior — Infinite scroll or pagination? (useInfiniteQuery hook available)
-☐ Content ordering — Chronological, algorithmic, or user choice?
-☐ Post metadata — What info per post? Timestamps, reactions, author?
+☑ Layout style — Cards vs list vs timeline? (Card component exists with variants)
+☑ Loading behavior — Infinite scroll or pagination? (useInfiniteQuery hook available)
+☑ Content ordering — Chronological, algorithmic, or user choice?
+☑ Post metadata — What info per post? Timestamps, reactions, author?
+☑ Empty & error states — What shows when no posts? Loading skeleton style?
 ```
 
 For "Database backup CLI" (command-line tool):
 ```
-☐ Output format — JSON, table, or plain text? Verbosity levels?
-☐ Flag design — Short flags, long flags, or both? Required vs optional?
-☐ Progress reporting — Silent, progress bar, or verbose logging?
-☐ Error recovery — Fail fast, retry, or prompt for action?
+☑ Output format — JSON, table, or plain text? Verbosity levels?
+☑ Flag design — Short flags, long flags, or both? Required vs optional?
+☑ Progress reporting — Silent, progress bar, or verbose logging?
+☑ Error recovery — Fail fast, retry, or prompt for action?
+☑ Naming & storage — Backup file naming convention? Storage location?
 ```
 
 For "Organize photo library" (organization task):
 ```
-☐ Grouping criteria — By date, location, faces, or events?
-☐ Duplicate handling — Keep best, keep all, or prompt each time?
-☐ Naming convention — Original names, dates, or descriptive?
-☐ Folder structure — Flat, nested by year, or by category?
+☑ Grouping criteria — By date, location, faces, or events?
+☑ Duplicate handling — Keep best, keep all, or prompt each time?
+☑ Naming convention — Original names, dates, or descriptive?
+☑ Folder structure — Flat, nested by year, or by category?
+☑ Edge cases — Corrupt files, unknown formats, missing metadata?
 ```
 
-Continue to discuss_areas with selected areas.
+Continue to discuss_areas with selected areas (which should be most or all areas by default).
 </step>
 
 <step name="discuss_areas">
@@ -603,8 +610,8 @@ Route to `confirm_creation` step (existing behavior — show manual next steps).
 <success_criteria>
 - Phase validated against roadmap
 - Codebase scouted for reusable assets, patterns, and integration points
-- Gray areas identified through intelligent analysis with code context annotations
-- User selected which areas to discuss
+- Gray areas identified comprehensively (4-6 areas) with code context annotations
+- All areas presented for discussion by default (user deselects areas they don't care about)
 - Each selected area explored until user satisfied (with code-informed options)
 - Scope creep redirected to deferred ideas
 - CONTEXT.md captures actual decisions, not vague vision

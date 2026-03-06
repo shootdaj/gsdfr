@@ -8,6 +8,10 @@
     "auto_advance": false,
     "nyquist_validation": false
   },
+  "review": {
+    "plan_review": true,
+    "wave_review": true
+  },
   "planning": {
     "commit_docs": true,
     "search_gitignored": false

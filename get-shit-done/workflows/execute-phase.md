@@ -171,7 +171,59 @@ Execute each wave in sequence. Within a wave: parallel if `PARALLELIZATION=true`
 
 6. **Execute checkpoint plans between waves** — see `<checkpoint_handling>`.
 
-7. **Proceed to next wave.**
+7. **Wave review gate (if enabled):**
+
+   ```bash
+   WAVE_REVIEW=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" config-get review.wave_review 2>/dev/null || echo "true")
+   ```
+
+   **If `WAVE_REVIEW` is `"true"` AND more waves remain:**
+
+   Present wave results and pause for user review before continuing.
+
+   ```
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    GSD ► WAVE {N} REVIEW — Phase {X}: {Name}
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Wave {N}/{total_waves} complete. Review before continuing.
+
+   ### What was built
+   {For each plan in wave:}
+   **{Plan ID}: {Plan Name}**
+   {Summary from SUMMARY.md — what changed, key files}
+
+   ### Changes
+   {Show git diff --stat for commits in this wave}
+
+   ### Up next — Wave {N+1}
+   {Plans in next wave with objectives}
+
+   ───────────────────────────────────────────────────────
+   ```
+
+   Use AskUserQuestion:
+   - header: "Wave Review"
+   - question: "Wave {N} complete. Review the changes above. Continue to Wave {N+1}?"
+   - options:
+     - "Continue" — Proceed to next wave
+     - "Show full diff" — Display complete git diff for this wave's commits before deciding
+     - "Pause here" — Stop execution after this wave (can resume later with /gsd:execute-phase)
+
+   **If "Continue":** Proceed to next wave.
+
+   **If "Show full diff":**
+   - Run `git diff {before_wave_commit}..HEAD` and display
+   - Re-ask: "Continue to next wave?" / "Pause here"
+
+   **If "Pause here":**
+   - Update STATE.md with current position (wave N complete, wave N+1 pending)
+   - Display: `Paused after Wave {N}. Resume: /gsd:execute-phase {X}`
+   - Exit workflow
+
+   **If `WAVE_REVIEW` is `"false"`:** Skip review, proceed to next wave immediately.
+
+8. **Proceed to next wave.**
 </step>
 
 <step name="checkpoint_handling">
