@@ -60,41 +60,9 @@ cat .planning/config.json 2>/dev/null
 
 **If all plans complete:**
 
-<if mode="yolo">
-
-**Check review config before auto-approving:**
-```bash
-PLAN_REVIEW=$(node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" config-get review.plan_review 2>/dev/null || echo "true")
-```
-
-**If `PLAN_REVIEW` is `"true"`:**
-
-Even in YOLO mode, pause for transition confirmation when plan review is enabled:
-
 Ask: "Phase [X] complete — all [Y] plans finished. Ready to mark done and move to Phase [X+1]?"
 
 Wait for confirmation before proceeding.
-
-**If `PLAN_REVIEW` is `"false"`:**
-
-```
-⚡ Auto-approved: Transition Phase [X] → Phase [X+1]
-Phase [X] complete — all [Y] plans finished.
-
-Proceeding to mark done and advance...
-```
-
-Proceed directly to cleanup_handoff step.
-
-</if>
-
-<if mode="interactive" OR="custom with gates.confirm_transition true">
-
-Ask: "Phase [X] complete — all [Y] plans finished. Ready to mark done and move to Phase [X+1]?"
-
-Wait for confirmation before proceeding.
-
-</if>
 
 **If plans incomplete:**
 
@@ -381,36 +349,6 @@ ls .planning/phases/*[X+1]*/*-CONTEXT.md 2>/dev/null
 
 **If next phase exists:**
 
-<if mode="yolo">
-
-**If CONTEXT.md exists:**
-
-```
-Phase [X] marked complete.
-
-Next: Phase [X+1] — [Name]
-
-⚡ Auto-continuing: Plan Phase [X+1] in detail
-```
-
-Exit skill and invoke SlashCommand("/gsd:plan-phase [X+1] --auto")
-
-**If CONTEXT.md does NOT exist:**
-
-```
-Phase [X] marked complete.
-
-Next: Phase [X+1] — [Name]
-
-⚡ Auto-continuing: Discuss Phase [X+1] first
-```
-
-Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1] --auto")
-
-</if>
-
-<if mode="interactive" OR="custom with gates.confirm_transition true">
-
 **If CONTEXT.md does NOT exist:**
 
 ```
@@ -460,8 +398,6 @@ Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1] --auto")
 ---
 ```
 
-</if>
-
 ---
 
 **Route B: Milestone complete (all phases done)**
@@ -470,22 +406,6 @@ Exit skill and invoke SlashCommand("/gsd:discuss-phase [X+1] --auto")
 ```bash
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" config-set workflow.auto_advance false
 ```
-
-<if mode="yolo">
-
-```
-Phase {X} marked complete.
-
-🎉 Milestone {version} is 100% complete — all {N} phases finished!
-
-⚡ Auto-continuing: Complete milestone and archive
-```
-
-Exit skill and invoke SlashCommand("/gsd:complete-milestone {version}")
-
-</if>
-
-<if mode="interactive" OR="custom with gates.confirm_transition true">
 
 ```
 ## ✓ Phase {X}: {Phase Name} Complete
@@ -509,8 +429,6 @@ Exit skill and invoke SlashCommand("/gsd:complete-milestone {version}")
 
 ---
 ```
-
-</if>
 
 </step>
 

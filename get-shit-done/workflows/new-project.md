@@ -14,7 +14,7 @@ Check if `--auto` flag is present in $ARGUMENTS.
 **If auto mode:**
 - Skip brownfield mapping offer (assume greenfield)
 - Skip deep questioning (extract context from provided document)
-- Config: YOLO mode is implicit (skip that question), but ask depth/git/agents FIRST (Step 2a)
+- Config: Interactive mode is always used, but ask depth/git/agents FIRST (Step 2a)
 - After config: run Steps 6-9 automatically with smart defaults:
   - Research: Always yes
   - Requirements: Include all table stakes + features from provided document
@@ -83,7 +83,7 @@ Exit command.
 
 **If auto mode:** Collect config settings upfront before processing the idea document.
 
-YOLO mode is implicit (auto = YOLO). Ask remaining config questions:
+Interactive mode is always used. Ask remaining config questions:
 
 **Round 1 — Core settings (3 questions, no Mode question):**
 
@@ -164,11 +164,11 @@ AskUserQuestion([
 ])
 ```
 
-Create `.planning/config.json` with mode set to "yolo":
+Create `.planning/config.json` with interactive mode:
 
 ```json
 {
-  "mode": "yolo",
+  "mode": "interactive",
   "depth": "[selected]",
   "parallelization": true|false,
   "commit_docs": true|false,
@@ -365,19 +365,10 @@ If "Yes": read `~/.gsd/defaults.json`, use those values for config.json, and ski
 
 If "No" or `~/.gsd/defaults.json` doesn't exist: proceed with the questions below.
 
-**Round 1 — Core workflow settings (4 questions):**
+**Round 1 — Core workflow settings (3 questions):**
 
 ```
 questions: [
-  {
-    header: "Mode",
-    question: "How do you want to work?",
-    multiSelect: false,
-    options: [
-      { label: "YOLO (Recommended)", description: "Auto-approve, just execute" },
-      { label: "Interactive", description: "Confirm at each step" }
-    ]
-  },
   {
     header: "Depth",
     question: "How thorough should planning be?",
@@ -467,7 +458,7 @@ Create `.planning/config.json` with all settings:
 
 ```json
 {
-  "mode": "yolo|interactive",
+  "mode": "interactive",
   "depth": "quick|standard|comprehensive",
   "parallelization": true|false,
   "commit_docs": true|false,

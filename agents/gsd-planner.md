@@ -1126,7 +1126,7 @@ Verify each plan fits context budget: 2-3 tasks, ~50% target. Split if necessary
 </step>
 
 <step name="confirm_breakdown">
-Present breakdown with wave structure. Wait for confirmation in interactive mode. Auto-approve in yolo mode.
+Present breakdown with wave structure. Wait for user confirmation before proceeding.
 </step>
 
 <step name="write_phase_prompt">

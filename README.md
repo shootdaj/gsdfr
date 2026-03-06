@@ -531,8 +531,9 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 
 | Setting | Options | Default | What it controls |
 |---------|---------|---------|------------------|
-| `mode` | `yolo`, `interactive` | `interactive` | Auto-approve vs confirm at each step |
 | `depth` | `quick`, `standard`, `comprehensive` | `standard` | Planning thoroughness (phases × plans) |
+| `review.plan_review` | `true`, `false` | `true` | Pause after planning to review plans before execution |
+| `review.wave_review` | `true`, `false` | `true` | Pause after each execution wave to review what was built |
 
 ### Model Profiles
 

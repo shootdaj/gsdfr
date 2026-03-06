@@ -40,7 +40,7 @@ One command takes you from idea to ready-for-planning:
 
 Creates all `.planning/` artifacts:
 - `PROJECT.md` — vision and requirements
-- `config.json` — workflow mode (interactive/yolo)
+- `config.json` — workflow settings and review gates
 - `research/` — domain research (if selected)
 - `REQUIREMENTS.md` — scoped requirements with REQ-IDs
 - `ROADMAP.md` — phases mapped to requirements
@@ -383,23 +383,17 @@ Usage: `/gsd:join-discord`
         └── 02-01-SUMMARY.md
 ```
 
-## Workflow Modes
+## Workflow Mode
 
-Set during `/gsd:new-project`:
-
-**Interactive Mode**
+GSD uses interactive mode — you stay involved at every meaningful decision point:
 
 - Confirms each major decision
 - Pauses at checkpoints for approval
+- Reviews plans before execution begins
+- Reviews each execution wave before continuing
 - More guidance throughout
 
-**YOLO Mode**
-
-- Auto-approves most decisions
-- Executes plans without confirmation
-- Only stops for critical checkpoints
-
-Change anytime by editing `.planning/config.json`
+Configure review gates in `.planning/config.json` under `review.plan_review` and `review.wave_review`.
 
 ## Planning Configuration
 

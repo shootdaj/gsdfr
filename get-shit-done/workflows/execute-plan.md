@@ -37,13 +37,7 @@ PHASE=$(echo "$PLAN_PATH" | grep -oE '[0-9]+(\.[0-9]+)?-[0-9]+')
 # config settings can be fetched via gsd-tools config-get if needed
 ```
 
-<if mode="yolo">
-Auto-approve: `⚡ Execute {phase}-{plan}-PLAN.md [Plan X of Y for Phase Z]` → parse_segments.
-</if>
-
-<if mode="interactive" OR="custom with gates.execute_next_plan true">
-Present plan identification, wait for confirmation.
-</if>
+Present plan identification, wait for confirmation before proceeding.
 </step>
 
 <step name="record_start_time">
@@ -373,7 +367,7 @@ Keep STATE.md under 150 lines.
 </step>
 
 <step name="issues_review_gate">
-If SUMMARY "Issues Encountered" ≠ "None": yolo → log and continue. Interactive → present issues, wait for acknowledgment.
+If SUMMARY "Issues Encountered" ≠ "None": present issues to user and wait for acknowledgment before continuing.
 </step>
 
 <step name="update_roadmap">

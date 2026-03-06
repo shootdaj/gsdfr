@@ -607,7 +607,7 @@ describe('cmdStateLoad (state load)', () => {
     );
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'config.json'),
-      JSON.stringify({ mode: 'yolo' })
+      JSON.stringify({ mode: 'interactive' })
     );
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'ROADMAP.md'),
@@ -640,7 +640,7 @@ describe('cmdStateLoad (state load)', () => {
     );
     fs.writeFileSync(
       path.join(tmpDir, '.planning', 'config.json'),
-      JSON.stringify({ mode: 'yolo' })
+      JSON.stringify({ mode: 'interactive' })
     );
 
     const result = runGsdTools('state load --raw', tmpDir);

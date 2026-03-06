@@ -239,9 +239,11 @@ GSD stores project settings in `.planning/config.json`. Configure during `/gsd:n
 
 | Setting | Options | Default | What it Controls |
 |---------|---------|---------|------------------|
-| `mode` | `interactive`, `yolo` | `interactive` | `yolo` auto-approves decisions; `interactive` confirms at each step |
+| `mode` | `interactive` | `interactive` | Confirms at each step, pauses for review |
 | `depth` | `quick`, `standard`, `comprehensive` | `standard` | Planning thoroughness: 3-5, 5-8, or 8-12 phases |
 | `model_profile` | `quality`, `balanced`, `budget` | `balanced` | Model tier for each agent (see table below) |
+| `review.plan_review` | `true`, `false` | `true` | Pause after planning to review plans before execution |
+| `review.wave_review` | `true`, `false` | `true` | Pause after each execution wave to review what was built |
 
 ### Planning Settings
 
@@ -364,11 +366,11 @@ claude --dangerously-skip-permissions
 
 ### Speed vs Quality Presets
 
-| Scenario | Mode | Depth | Profile | Research | Plan Check | Verifier |
-|----------|------|-------|---------|----------|------------|----------|
-| Prototyping | `yolo` | `quick` | `budget` | off | off | off |
-| Normal dev | `interactive` | `standard` | `balanced` | on | on | on |
-| Production | `interactive` | `comprehensive` | `quality` | on | on | on |
+| Scenario | Depth | Profile | Research | Plan Check | Verifier | Plan Review | Wave Review |
+|----------|-------|---------|----------|------------|----------|-------------|-------------|
+| Prototyping | `quick` | `budget` | off | off | off | off | off |
+| Normal dev | `standard` | `balanced` | on | on | on | on | on |
+| Production | `comprehensive` | `quality` | on | on | on | on | on |
 
 ### Mid-Milestone Scope Changes
 

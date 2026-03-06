@@ -178,7 +178,6 @@ mkdir -p ~/.gsd
 Write `~/.gsd/defaults.json` with:
 ```json
 {
-  "mode": <current>,
   "depth": <current>,
   "model_profile": <current>,
   "commit_docs": <current>,
