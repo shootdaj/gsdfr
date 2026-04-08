@@ -1,5 +1,6 @@
 <purpose>
-Check for GSD updates via npm, display changelog for versions between installed and latest, obtain user confirmation, and execute clean installation with cache clearing.
+Check for GSD updates from upstream, show changelog, merge into fork, and update hooks/agents.
+This is the fork-aware version — uses git merge instead of npm install to preserve local customizations.
 </purpose>
 
 <required_reading>
@@ -9,207 +10,172 @@ Read all files referenced by the invoking prompt's execution_context before star
 <process>
 
 <step name="get_installed_version">
-Detect whether GSD is installed locally or globally by checking both locations and validating install integrity:
+Read the current installed version:
 
 ```bash
-# Check local first (takes priority only if valid)
-# Paths templated at install time for runtime compatibility
-LOCAL_VERSION_FILE="./.claude/get-shit-done/VERSION"
-LOCAL_MARKER_FILE="./.claude/get-shit-done/workflows/update.md"
-GLOBAL_VERSION_FILE="$HOME/.claude/get-shit-done/VERSION"
-GLOBAL_MARKER_FILE="$HOME/.claude/get-shit-done/workflows/update.md"
-
-if [ -f "$LOCAL_VERSION_FILE" ] && [ -f "$LOCAL_MARKER_FILE" ] && grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+' "$LOCAL_VERSION_FILE"; then
-  cat "$LOCAL_VERSION_FILE"
-  echo "LOCAL"
-elif [ -f "$GLOBAL_VERSION_FILE" ] && [ -f "$GLOBAL_MARKER_FILE" ] && grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+' "$GLOBAL_VERSION_FILE"; then
-  cat "$GLOBAL_VERSION_FILE"
-  echo "GLOBAL"
-else
-  echo "UNKNOWN"
-fi
+cat "$HOME/.claude/get-shit-done/get-shit-done/VERSION" 2>/dev/null || cat "$HOME/.claude/get-shit-done/VERSION" 2>/dev/null || echo "0.0.0"
 ```
-
-Parse output:
-- If last line is "LOCAL": local install is valid; installed version is first line; use `--local`
-- If last line is "GLOBAL": local missing/invalid, global install is valid; installed version is first line; use `--global`
-- If "UNKNOWN": proceed to install step (treat as version 0.0.0)
-
-**If VERSION file missing:**
-```
-## GSD Update
-
-**Installed version:** Unknown
-
-Your installation doesn't include version tracking.
-
-Running fresh install...
-```
-
-Proceed to install step (treat as version 0.0.0 for comparison).
 </step>
 
-<step name="check_latest_version">
-Check npm for latest version:
+<step name="check_upstream">
+Fetch upstream and check for new commits:
 
 ```bash
-npm view get-shit-done-cc version 2>/dev/null
+cd "$HOME/.claude/get-shit-done"
+git fetch upstream 2>/dev/null
+
+# Get upstream version
+UPSTREAM_VERSION=$(git show upstream/main:get-shit-done/VERSION 2>/dev/null || echo "unknown")
+INSTALLED_VERSION=$(cat get-shit-done/VERSION 2>/dev/null || echo "0.0.0")
+
+echo "INSTALLED=$INSTALLED_VERSION"
+echo "UPSTREAM=$UPSTREAM_VERSION"
+
+# Count new commits
+NEW_COMMITS=$(git rev-list HEAD..upstream/main --count 2>/dev/null || echo "0")
+echo "NEW_COMMITS=$NEW_COMMITS"
 ```
 
-**If npm check fails:**
-```
-Couldn't check for updates (offline or npm unavailable).
-
-To update manually: `npx get-shit-done-cc --global`
-```
-
-Exit.
-</step>
-
-<step name="compare_versions">
-Compare installed vs latest:
-
-**If installed == latest:**
+**If NEW_COMMITS == 0:**
 ```
 ## GSD Update
 
 **Installed:** X.Y.Z
-**Latest:** X.Y.Z
+**Upstream:** X.Y.Z
 
-You're already on the latest version.
+You're up to date. No new upstream changes.
 ```
-
-Exit.
-
-**If installed > latest:**
-```
-## GSD Update
-
-**Installed:** X.Y.Z
-**Latest:** A.B.C
-
-You're ahead of the latest release (development version?).
-```
-
 Exit.
 </step>
 
 <step name="show_changes_and_confirm">
-**If update available**, fetch and show what's new BEFORE updating:
+**If updates available**, show what's new:
 
-1. Fetch changelog from GitHub raw URL
-2. Extract entries between installed and latest versions
-3. Display preview and ask for confirmation:
+```bash
+cd "$HOME/.claude/get-shit-done"
+
+# Show upstream changelog diff
+git diff HEAD..upstream/main -- CHANGELOG.md 2>/dev/null | grep "^+" | grep -v "^+++" | head -40
+```
+
+Display:
 
 ```
-## GSD Update Available
+## GSD Update Available (Fork)
 
-**Installed:** 1.5.10
-**Latest:** 1.5.15
+**Installed:** {INSTALLED_VERSION}
+**Upstream:** {UPSTREAM_VERSION}
+**New commits:** {NEW_COMMITS}
 
 ### What's New
 ────────────────────────────────────────────────────────────
-
-## [1.5.15] - 2026-01-20
-
-### Added
-- Feature X
-
-## [1.5.14] - 2026-01-18
-
-### Fixed
-- Bug fix Y
-
+{changelog diff}
 ────────────────────────────────────────────────────────────
 
-⚠️  **Note:** The installer performs a clean install of GSD folders:
-- `commands/gsd/` will be wiped and replaced
-- `get-shit-done/` will be wiped and replaced
-- `agents/gsd-*` files will be replaced
-
-(Paths are relative to your install location: `~/.claude/` for global, `./.claude/` for local)
-
-Your custom files in other locations are preserved:
-- Custom commands not in `commands/gsd/` ✓
-- Custom agents not prefixed with `gsd-` ✓
-- Custom hooks ✓
-- Your CLAUDE.md files ✓
-
-If you've modified any GSD files directly, they'll be automatically backed up to `gsd-local-patches/` and can be reapplied with `/gsd:reapply-patches` after the update.
+This will merge upstream changes into your fork. Your customizations are preserved.
+If there are conflicts, you'll resolve them inline.
 ```
 
 Use AskUserQuestion:
 - Question: "Proceed with update?"
 - Options:
-  - "Yes, update now"
+  - "Yes, merge upstream"
   - "No, cancel"
 
 **If user cancels:** Exit.
 </step>
 
-<step name="run_update">
-Run the update using the install type detected in step 1:
-
-**If LOCAL install:**
-```bash
-npx -y get-shit-done-cc@latest --local
-```
-
-**If GLOBAL install (or unknown):**
-```bash
-npx -y get-shit-done-cc@latest --global
-```
-
-Capture output. If install fails, show error and exit.
-
-Clear the update cache so statusline indicator disappears:
+<step name="merge_upstream">
+Merge upstream into fork:
 
 ```bash
-rm -f ./.claude/cache/gsd-update-check.json
-rm -f ~/.claude/cache/gsd-update-check.json
+cd "$HOME/.claude/get-shit-done"
+git merge upstream/main -m "merge: upstream GSD $(git show upstream/main:get-shit-done/VERSION)"
 ```
 
-The SessionStart hook (`gsd-check-update.js`) always writes to `~/.claude/cache/` via `os.homedir()` regardless of install type, so both paths must be cleared to prevent stale update indicators.
+**If merge succeeds (no conflicts):**
+```
+✓ Merged upstream successfully.
+```
+
+Push to fork:
+```bash
+git push origin main
+```
+
+**If merge has conflicts:**
+```
+## Merge Conflicts
+
+The following files have conflicts between your customizations and upstream:
+
+{list conflicted files}
+
+Resolve the conflicts, then:
+  cd ~/.claude/get-shit-done
+  git add -A
+  git commit
+  git push origin main
+```
+Exit and let user resolve.
 </step>
 
-<step name="display_result">
-Format completion message (changelog was already shown in confirmation step):
+<step name="update_hooks_and_agents">
+After successful merge, check if hooks or agents need updating:
 
+```bash
+cd "$HOME/.claude/get-shit-done"
+
+# Compare repo hooks with installed hooks
+for hook in hooks/gsd-*.js; do
+  BASENAME=$(basename "$hook")
+  INSTALLED="$HOME/.claude/hooks/$BASENAME"
+  if [ -f "$INSTALLED" ]; then
+    if ! diff -q "$hook" "$INSTALLED" > /dev/null 2>&1; then
+      echo "STALE_HOOK: $BASENAME"
+      cp "$hook" "$INSTALLED"
+      echo "UPDATED: $BASENAME"
+    fi
+  fi
+done
+
+# Compare repo agents with installed agents
+for agent in agents/gsd-*.md; do
+  BASENAME=$(basename "$agent")
+  INSTALLED="$HOME/.claude/agents/$BASENAME"
+  if [ -f "$INSTALLED" ]; then
+    if ! diff -q "$agent" "$INSTALLED" > /dev/null 2>&1; then
+      echo "STALE_AGENT: $BASENAME"
+      cp "$agent" "$INSTALLED"
+      echo "UPDATED: $BASENAME"
+    fi
+  fi
+done
 ```
-╔═══════════════════════════════════════════════════════════╗
-║  GSD Updated: v1.5.10 → v1.5.15                           ║
-╚═══════════════════════════════════════════════════════════╝
 
-⚠️  Restart Claude Code to pick up the new commands.
+Report what was updated.
+</step>
 
-[View full changelog](https://github.com/glittercowboy/get-shit-done/blob/main/CHANGELOG.md)
+<step name="clear_cache">
+Clear update cache so the session hook doesn't re-prompt:
+
+```bash
+rm -f "$HOME/.claude/cache/gsd-update-check.json"
 ```
 </step>
 
-
-<step name="check_local_patches">
-After update completes, check if the installer detected and backed up any locally modified files:
-
-Check for gsd-local-patches/backup-meta.json in the config directory.
-
-**If patches found:**
-
+<step name="report">
 ```
-Local patches were backed up before the update.
-Run /gsd:reapply-patches to merge your modifications into the new version.
-```
+## GSD Update Complete (Fork)
 
-**If no patches:** Continue normally.
+**Previous:** {INSTALLED_VERSION}
+**Updated to:** {UPSTREAM_VERSION}
+**Commits merged:** {NEW_COMMITS}
+**Hooks updated:** {list or "none"}
+**Agents updated:** {list or "none"}
+
+Your customizations are preserved. Changes pushed to shootdaj/gsdfr.
+```
 </step>
+
 </process>
-
-<success_criteria>
-- [ ] Installed version read correctly
-- [ ] Latest version checked via npm
-- [ ] Update skipped if already current
-- [ ] Changelog fetched and displayed BEFORE update
-- [ ] Clean install warning shown
-- [ ] User confirmation obtained
-- [ ] Update executed successfully
-- [ ] Restart reminder shown
-</success_criteria>
