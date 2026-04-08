@@ -1,1 +1,0 @@
-../get-shit-done/bin/gsd-tools.cjs
